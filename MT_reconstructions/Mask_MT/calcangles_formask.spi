@@ -1,0 +1,185 @@
+
+
+
+
+;;;;;;;  inputs stack of MT segments
+;;;;;;;  outputs the angles to make them vertical and a "clean" stack
+
+
+
+
+FR
+?input stack? <raw>
+
+RR x50
+?input box size?
+
+RR x55
+?input number of particles?
+
+;RR x80
+;?input radius to mask in pixels?
+
+FR
+?output angles? <angles>
+
+
+
+x51=x50/2	; radius of box
+
+
+x82=x50+4	;actual radon size
+
+;x70=x80*2	;window width for MT
+
+;x71=x51-x80+2	;starting point for window +2 for radon offset
+
+MD
+SET MP
+(0)
+
+
+do lb1 x10=1,x55		; for each particle
+
+PW
+<raw>@{******x10}
+_1
+
+RM 2DN
+_1
+(1)
+_2	; radon output
+(x50)
+(x51)
+(0,0)
+N
+
+MA X	; only include the equator for determination
+_2
+_3
+(6,0)
+D
+E
+(0)
+(x51, 1)
+
+PK x20,x21,x22	; find peak.  x21 will contain the row and therefore the angle of rotation
+_3
+(1,0)
+
+SD x10, x21
+<angles>
+
+
+;RT
+;<raw>@{******x10}
+;_4
+;(x21)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+;;;do radon transform to get 1D projection
+
+;RM 2DN
+;_4
+;(90)
+;_5
+;(x50)
+;(x51)
+;(0,0)
+;(N)
+
+
+;;;;WIndow to get projection
+
+;WI
+;_5
+;_6
+;(x70 1)
+;(x71 1)
+
+;;;;PaD windowed projection into box
+
+;PD
+;_6
+;_7
+;(x50 1)
+;(N)
+;(0)
+;(x71 1)
+
+;CP
+;_7
+;<raw>_1D_PD@{*****x10}
+
+
+;;;;;Back project to make mask
+
+;BL
+;_8
+;(x50 x50)
+;(N)
+;(0)
+
+;do lb5 x11=1,x50
+
+;PA
+;_7
+;_8
+;(0, x11)
+
+;lb5
+
+;;;; normalize mask since 1D proj sums average intensities
+
+;AR
+;_8
+;_9
+;(P1/x50)
+
+;;;; circular mask the equator mask
+
+;MA
+;_9
+;_2
+;(x51 0)
+;C
+;E
+;(0)
+;(x51 x51)
+;(5)
+
+
+;;;; subtract mask to remove MT equator
+
+;x90=x21*(-1)
+
+;RT B
+;_2
+;_3
+;(x90)
+;(0)
+
+;SU
+;<raw>@{*****x10}
+;_3
+;<raw>_MTcorrect@{*****x10}
+;*
+
+;CP
+;_3
+;<raw>_equMask@{*****x10}
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+lb1				; for each particle
+
+
+EN D
+

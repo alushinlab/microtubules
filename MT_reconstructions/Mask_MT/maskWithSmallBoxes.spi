@@ -1,0 +1,93 @@
+
+;	Vince Ramey - Nogales Lab - UC Berkeley
+
+;	This script takes a particle stack and an angles file and masks 
+;	out the central portion with a fuzzy rectangle of the size of your choosing
+
+
+MD
+SET MP
+2
+
+FR
+?ANGLES FILE? <ang>	; a file with the filament angles for each particle
+			; this is derived from the box file by looking at the angle
+			; between the ends
+
+FR
+?PARTICLE STACK? <stack>	; particle stack to be masked
+
+RR x90
+?MASK LENGTH IN PIXELS?	; defined as the length along the filament
+
+RR x91
+?MASK WIDTH IN PIXELS?	; size perpendicular to direction of filament
+
+RR x92
+?WINDOW SIZE?
+
+x93=x91/2	; radius for width mask
+x94=x90/2	; radius for length mask
+x95=x92/2	; half window size for center
+
+;;;;;;;;;;;;;;;; GENERATE MASK ;;;;;;;;;;;;;;;;;;;;;;
+
+BL
+_1		; _1 is the empty start
+(x92 x92)
+N
+1
+
+MA X		; mask it off in X
+_1
+_2
+(x93)
+C
+E
+0
+(x95 x95)
+(30)
+
+MA Y
+_2
+_3
+(x94)
+C
+E
+0
+(x95 x95)
+(30)
+
+CP
+_3
+unrot_final_mask
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+UD N x20
+<ang>
+
+do lb1 x10=1,x20 	; for each angle, make a masked copy of the particle
+
+UD IC x10, x30
+<ang>
+
+RT B	; rotate mask to match angle of segment
+_3
+_9
+(x30)
+(0)
+
+MU
+<stack>@{******x10}
+_9
+<stack>_smallMask@{******x10}
+*
+
+lb1
+
+UD ICE
+<ang>
+
+EN D
+

@@ -1,0 +1,25 @@
+#!/bin/bash
+#PBS -N helical
+
+cd $PBS_O_WORKDIR
+
+#These commands / variables should be modified to load the appropriate environment for the user's cluster.
+#EMAN1, EMAN2/SPARX, Open MPI, and hsearch_lorentz (from Egelman) are required.
+
+MPI_COMMAND = "/usr/local/apps/EMAN2/openmpi/1.6.5/gnu/eth/bin/mpirun" 
+
+source /data/Alushinlab/environment/.bashrc
+source /usr/local/EMAN1-1.9/eman.bashrc
+module load eman2
+
+#Modify the following variable to set the number of processors to be used:
+NUM_CPUS=32
+
+#Modify the following variables to set initial guesses for the helical rise (angstroms) and twist:
+RISE=27.6
+TWIST=-166.5
+
+
+#execute
+
+$MPI_COMMAND -machinefile $PBS_NODEFILE -np $NUM_CPUS /data/Alushinlab/lab_scripts/EMAN2/EMAN2_actin2/refine.py start.hdf init.hdf refine --ou=120 --rs=1 --xr='16 8 4' --ts='4 2 1' --delta='4 3 2' --an='-1 30 10' --snr=0.08 --maxit=2 --ref_a=S --cutoff=1 --MPI --olmask=80 --lmask=280 --protos='1' --hpars='' --hsearch='0.0 50.0' --oplane=10 --recon_pad=2 --full_output --sort > refine.log
