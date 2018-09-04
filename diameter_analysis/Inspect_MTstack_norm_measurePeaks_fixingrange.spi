@@ -1,0 +1,156 @@
+;Script that makes a stack of MT particles/class averages vertical, then outputs a plot of 1-d integration (radial density profile)
+;This version also outputs the vertical particles as a stack, and their power spectra as a stack
+;It can be used as an initial processing step of microtubule segment class averages to select classes for further processing
+;Files output : [stack]_vert: vertical particles, [stack]_vert_rotation_angles: angles for vertical rotation
+; [stack]_vert_PW: power spectra of vertical particles, [stack]_proj1D: 1D projection of vertical particles
+; 
+; Note: This script requires an older version of SPIDER (v 21.11) which includes Radon transforms!
+
+RR x50
+?What is the box size?
+
+FR
+?What is the name of the stack? [stack]
+
+RR x55
+?How many particles are in the stack?
+
+;Mad props to Vince Ramey for this section of the script, based on "removeMT_segment.spi"
+
+x51=x50/2 ;radius of box for radon transform
+
+;Looping for each particle in the stack, we will do a radon transform of the power spectrum to find equator
+;We will use this to determine rotation angle to make the particle vertical
+
+MD
+SET MP
+(0)
+
+
+do lb1 x10=1,x55
+
+
+PW
+[stack]@{****x10}
+_1
+
+RM 2DN
+_1
+(1)
+_2 ;radon output
+(x50)
+(x51)
+(0,0)
+N
+
+MA X ;Mask in X direction to only include equator
+_2
+_3 ;output of mask operation
+(6,0)
+D
+E
+(0)
+(x51,90)
+
+PK x20,x21,x22 ;find the peak.  x21 contains the row, which is the angle of rotation
+_3
+(1,0)
+
+SD x10, x21 ;saves the angle of rotation for each particle to a document file
+[stack]_vert_rotation_angles
+
+;Now rotate each image by the appropriate angle to make it vertical
+
+RT
+[stack]@{****x10}
+[stack]_vert@{****x10}
+(x21)
+
+;Now take a power spectrum, just for fun
+PW
+[stack]_vert@{****x10}
+[stack]_vert_PW@{****x10}
+
+;Now do the radon transform to get the 1D projection
+
+RM 2DN
+[stack]_vert@{****x10}
+(90)
+_5
+(x50)
+(x51)
+(0,0)
+(N)
+
+
+;This loop outputs the 1-d image pixel values into a document file for plotting
+
+do lb2 x70=1,x50
+
+GP x71
+_5
+x70,1
+
+
+;saves a dummy document file with the values
+SD x70,x71
+temp_{****x10}
+
+lb2
+
+SD E
+temp_{****x10}
+
+;this section of the procedure generates a spider image file plotting the intensity vs. radial distance
+
+DOC SORT
+temp_{****x10}
+temp_sort_{****x10}
+(1)
+Y
+
+UD 1, x91		; min
+temp_sort_{****x10}
+
+UD x50, x92		; max
+temp_sort_{****x10}
+
+x99=x50/3
+
+x95=x92-x91		; range
+x96=(x50/x95)/2.5 		; box over range  (scaling factor)
+
+
+;x97=x50/x91 + x99		; box over min    (shift factor)
+
+
+
+PP LL
+temp_{****x10}
+[stack]_proj1D@{****x10}
+(x50,x50)
+(0,1)
+(-1)
+(-100)
+(1000)
+(0)
+(1,x96)
+(0,x99)
+
+
+SD E
+temp_sort_{****x10}
+
+;for some reason SPIDER squawks if you try to use the same document file each time.  hence this clumsy construction.
+;DE
+;temp_sort_{****x10}
+
+;DE
+;temp_{****x10}
+
+
+
+
+lb1
+
+EN

@@ -1,0 +1,42 @@
+;This script makes vertical MT projections regularly around the Z (PHI) axis for width measurements
+;It outputs a stack that can be analyzed with Inspect_MT_stack
+
+RR [box_size]
+?What is the box size?
+
+FR
+?What is the name of the volume? [volume]
+
+RR [interval]
+?What angular interval to use (suggested 1,2,5)?
+
+RR [mask]
+?What is the mask radius to use in pixels?
+
+[num_angs] = 360 / [interval]
+
+[ang] = 0
+[center]=([box_size]/2)+1
+
+do lb1 x10 = 1, [num_angs]
+
+pj 3
+[volume]
+[box_size],[box_size]
+_1
+[ang],90,90
+
+MA
+_1
+[volume]_projected@{*****x10}
+[mask],0.0
+D
+E
+0.0
+[center],[center]
+
+[ang] = [ang] + [interval]
+
+lb1
+EN D
+
